@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.0.3, pluggy-1.6.0
+rootdir: C:\Users\ngocb\Documents\AI_thucchien\Day-25
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0
+collected 12 items
+
+tests\test_config.py ..                                                  [ 16%]
+tests\test_gateway_contract.py .                                         [ 25%]
+tests\test_metrics.py ..                                                 [ 41%]
+tests\test_redis_cache.py .F.F.                                          [ 91%]
+tests\test_todo_requirements.py x                                        [100%]
+
+=========================== short test summary info ===========================
+FAILED tests/test_redis_cache.py::test_set_and_exact_get - AssertionError: as...
+FAILED tests/test_redis_cache.py::test_shared_state_across_instances - Assert...
+FAILED tests/test_redis_cache.py::test_false_hit_different_years - assert 0 >= 1
+=================== 3 failed, 8 passed, 1 xfailed in 2.36s ====================

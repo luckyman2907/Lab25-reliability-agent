@@ -15,7 +15,7 @@ def _redis_available() -> bool:
     try:
         import redis as redis_lib
 
-        r = redis_lib.Redis.from_url("redis://localhost:6379/0")
+        r = redis_lib.Redis.from_url("redis://127.0.0.1:6379/0")
         r.ping()
         r.close()
         return True
@@ -32,7 +32,7 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture
 def cache() -> SharedRedisCache:  # type: ignore[misc]
     c = SharedRedisCache(
-        redis_url="redis://localhost:6379/0",
+        redis_url="redis://127.0.0.1:6379/0",
         ttl_seconds=60,
         similarity_threshold=0.5,
         prefix="rl:test:",
@@ -57,7 +57,7 @@ def test_set_and_exact_get(cache: SharedRedisCache) -> None:
 
 def test_ttl_expiry() -> None:
     c = SharedRedisCache(
-        redis_url="redis://localhost:6379/0",
+        redis_url="redis://127.0.0.1:6379/0",
         ttl_seconds=1,
         similarity_threshold=0.5,
         prefix="rl:test:ttl:",
@@ -74,13 +74,13 @@ def test_ttl_expiry() -> None:
 def test_shared_state_across_instances() -> None:
     """Two SharedRedisCache instances on same Redis should see same data."""
     c1 = SharedRedisCache(
-        redis_url="redis://localhost:6379/0",
+        redis_url="redis://127.0.0.1:6379/0",
         ttl_seconds=60,
         similarity_threshold=0.5,
         prefix="rl:test:shared:",
     )
     c2 = SharedRedisCache(
-        redis_url="redis://localhost:6379/0",
+        redis_url="redis://127.0.0.1:6379/0",
         ttl_seconds=60,
         similarity_threshold=0.5,
         prefix="rl:test:shared:",

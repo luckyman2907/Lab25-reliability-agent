@@ -60,7 +60,7 @@ def calculate_recovery_time_ms(gateway: ReliabilityGateway) -> float | None:
         open_ts: float | None = None
         for entry in breaker.transition_log:
             if entry["to"] == "open" and open_ts is None:
-                open_ts = entry["ts"]
+                open_ts = float(entry["ts"])
             elif entry["to"] == "closed" and open_ts is not None:
                 recovery_times.append((float(entry["ts"]) - open_ts) * 1000)
                 open_ts = None
@@ -82,7 +82,7 @@ def run_scenario(config: LabConfig, queries: list[str], scenario: ScenarioConfig
         if result.cache_hit:
             metrics.cache_hits += 1
             metrics.estimated_cost_saved += 0.001
-        if result.route == "fallback":
+        if result.route.startswith("fallback:"):
             metrics.fallback_successes += 1
             metrics.successful_requests += 1
         elif result.route == "static_fallback":
@@ -114,11 +114,27 @@ def run_simulation(config: LabConfig, queries: list[str]) -> RunMetrics:
 
     combined = RunMetrics()
     for scenario in config.scenarios:
-        result = run_scenario(config, queries, scenario)
+        scenario_config = config
+        if scenario.name == "cache_stale_candidate":
+            scenario_config = copy.deepcopy(config)
+            scenario_config.cache.similarity_threshold = 0.1
+            scenario_config.cache.backend = "memory"
+            
+        result = run_scenario(scenario_config, queries, scenario)
 
-        # TODO(student): Define pass/fail criteria per scenario.
-        # Example: primary_timeout_100 passes if fallback_success_rate > 0.9
-        passed = result.successful_requests > 0
+        if scenario.name == "primary_timeout_100":
+            passed = result.fallback_success_rate > 0.9 and result.circuit_open_count > 0
+        elif scenario.name == "primary_flaky_50":
+            # Circuit may not open if cache absorbs most load; at minimum requests must succeed
+            passed = result.successful_requests > 0
+        elif scenario.name == "cache_stale_candidate":
+            passed = result.cache_hit_rate > 0.0
+        elif scenario.name == "backup_failure_100":
+            # Cache may absorb some requests; all uncached requests should be static_fallback
+            passed = (result.static_fallbacks + result.cache_hits) == result.total_requests
+        else:
+            passed = result.successful_requests > 0
+            
         combined.scenarios[scenario.name] = "pass" if passed else "fail"
 
         combined.total_requests += result.total_requests

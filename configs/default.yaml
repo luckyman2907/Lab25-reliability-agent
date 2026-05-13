@@ -13,10 +13,10 @@ circuit_breaker:
   success_threshold: 1
 cache:
   enabled: true
-  backend: memory          # "memory" (default) or "redis" (requires docker compose up -d)
+  backend: redis          # "memory" (default) or "redis" (requires docker compose up -d)
   ttl_seconds: 300
   similarity_threshold: 0.92
-  redis_url: "redis://localhost:6379/0"
+  redis_url: "redis://127.0.0.1:6379/0"
 load_test:
   requests: 100
 
@@ -31,6 +31,11 @@ scenarios:
     description: "Primary provider fails 50% — circuit should oscillate"
     provider_overrides:
       primary: 0.5
-  - name: all_healthy
-    description: "Baseline — both providers healthy"
+  - name: cache_stale_candidate
+    description: "Cache enabled with low threshold — should produce false hits"
     provider_overrides: {}
+  - name: backup_failure_100
+    description: "Both primary and backup fail 100% — traffic should go to static fallback"
+    provider_overrides:
+      primary: 1.0
+      backup: 1.0

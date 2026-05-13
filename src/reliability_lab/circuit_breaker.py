@@ -21,8 +21,6 @@ class CircuitOpenError(RuntimeError):
 @dataclass(slots=True)
 class CircuitBreaker:
     """Circuit breaker skeleton.
-
-    TODO(student): Implement a production-safe state machine:
     - CLOSED: calls pass through; count failures.
     - OPEN: fail fast until reset timeout elapses.
     - HALF_OPEN: allow a probe; close on success or re-open on failure.
@@ -41,7 +39,6 @@ class CircuitBreaker:
     def allow_request(self) -> bool:
         """Return whether a request should be attempted.
 
-        TODO(student): Return False when OPEN and timeout has not elapsed.
         When timeout elapsed, transition to HALF_OPEN and allow one probe.
         """
         if self.state == CircuitState.OPEN:
@@ -65,7 +62,6 @@ class CircuitBreaker:
 
     def record_success(self) -> None:
         """Record success and close from HALF_OPEN if enough probes pass."""
-        # TODO(student): refine success threshold handling and counters.
         self.failure_count = 0
         self.success_count += 1
         if self.state == CircuitState.HALF_OPEN and self.success_count >= self.success_threshold:
@@ -74,10 +70,12 @@ class CircuitBreaker:
 
     def record_failure(self) -> None:
         """Record failure and open when threshold is reached."""
-        # TODO(student): handle HALF_OPEN failure explicitly and reset success counter.
         self.failure_count += 1
         self.success_count = 0
-        if self.state == CircuitState.HALF_OPEN or self.failure_count >= self.failure_threshold:
+        if self.state == CircuitState.HALF_OPEN:
+            self._transition(CircuitState.OPEN, "probe_failure")
+            self.opened_at = time.monotonic()
+        elif self.failure_count >= self.failure_threshold:
             self._transition(CircuitState.OPEN, "failure_threshold")
             self.opened_at = time.monotonic()
 
